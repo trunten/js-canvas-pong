@@ -9,6 +9,6 @@
 - Hit the ball using different points on the paddle to alter the ball trajectory 
 
 ## Screenshots
-[Start](/images/screenshot-1.png)
-[In game](/images/screenshot-2.png)
-[Player 2 Win](/images/screenshot-3.png)
+![Start](/images/screenshot-1.png)
+![In game](/images/screenshot-2.png)
+![Player 2 Win](/images/screenshot-3.png)
