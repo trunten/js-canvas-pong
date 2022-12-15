@@ -3,6 +3,7 @@
 - Game of pong using the HTML canvas element and javascript
 
 ## Usage
+- [Link to the game](https://trunten.github.io/js-canvas-pong/)
 - Click anywhere on the cancas to begin
 - Paddle is moved up and down by moving your mouse up and down (***NB: paddle can only track the cursor position if it reamins inside the canvas element***)
 - Computer oponent will intelligently track the ball and make a formidable foe
