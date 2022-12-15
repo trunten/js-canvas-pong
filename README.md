@@ -4,7 +4,7 @@
 
 ## Usage
 - [Link to the game](https://trunten.github.io/js-canvas-pong/)
-- Click anywhere on the cancas to begin
+- Click anywhere on the canvas to begin
 - Paddle is moved up and down by moving your mouse up and down (***NB: paddle can only track the cursor position if it reamins inside the canvas element***)
 - Computer oponent will intelligently track the ball and make a formidable foe
 - Hit the ball using different points on the paddle to alter the ball trajectory 
