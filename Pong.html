@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong</title>
+</head>
+<body>
+    <canvas id='gameCanvas' height='600' width='800' style='cursor:none'></canvas>
+</body>
+<script>
+    const DEFAULT_BALL_SPEED = {dx:5, dy:2};
+    const WINNNG_SCORE = 7;
+    let canvas;
+    let canvasContext;
+    let ball = {x:0, y:0, r:5, dx:0, dy:0};
+    let player1 = {x:10, y:10, h:50, w:10, score:0, speed:4};
+    let player2 = {x:10, y:10, h:50, w:10, score:0, speed:4};
+    let courtColour= 'green';
+    let itemColour = 'white'
+    let game;
+    let gamePaused = true;
+
+    window.onload = function() {
+        const FPS = 60;
+
+        canvas = document.getElementById('gameCanvas');
+        canvasContext = canvas.getContext('2d');
+        player1.y = (canvas.height / 2) - (player1.h / 2);
+        player2.y = (canvas.height / 2) - (player2.h / 2);
+        player2.x = canvas.width - player2.w - player1.x;
+        ballReset();
+        drawEverything();
+
+        //main game loop
+        game = setInterval(()=>{
+            if (!gamePaused) {
+                moveEverything(); 
+                drawEverything();
+            }
+        }, 1000/FPS);
+
+        // Maek paddle track the mourse cursor
+        canvas.addEventListener('mousemove', evt => { 
+            let mousePos = calculateMousePos(evt);
+            player1.y = mousePos.y - (player1.h / 2);   
+        })
+
+        // Listen for mouse clicks to (re)start the game on click
+        canvas.addEventListener('mousedown', evt => { 
+            if (gamePaused) {
+                player1.score = 0;
+                player2.score = 0;
+                gamePaused = false;   
+            }
+        })
+    }
+
+    function calculateMousePos(evt) {
+        let rect = canvas.getBoundingClientRect();
+        let root = document.documentElement;
+        return { 
+            x: evt.clientX - rect.left - root.scrollLeft,
+            y: evt.clientY - rect.top - root.scrollTop
+        };
+    }
+
+    function moveEverything() {
+        // Move the ball
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        // Check collisions to update ball behaviour if required
+        collisions();
+
+        // Move computer player
+        let player2Offset = Math.abs(ball.y - (player2.y + player2.h/2));
+        if (player2.y + (player2.h / 2) < ball.y) {
+            if (ball.dx > 0) { player2.y += Math.min(player2Offset, player2.speed); }
+        } else {
+            if (ball.dx > 0) { player2.y -= Math.min(player2Offset, player2.speed); }
+        };
+    }
+
+    //draw all game objects on the canvas
+    function drawEverything() {
+        drawRect(0, 0, canvas.width, canvas.height, courtColour); //Resets court
+        if (gamePaused) {
+            if (player1.score == WINNNG_SCORE || player2.score == WINNNG_SCORE) {
+                drawText('Player ' + ( player1.score == WINNNG_SCORE ? 1 : 2 ) + ' Wins!', (canvas.width / 2) - 200, 300, 50, itemColour);
+                drawText('Click to continue', (canvas.width / 2) - 148, 350, 30, itemColour);
+            } else {
+                drawText('Click to start', (canvas.width / 2) - 210, 300, 50, itemColour);
+                return;
+            }
+        } else {
+            drawBall();
+            
+            // Draw net
+            drawRect(canvas.width/2 -1, 0, 2, canvas.height, itemColour)
+        }
+
+        // Draw Players
+        drawRect(player1.x, player1.y, player1.w, player1.h), itemColour;
+        drawRect(player2.x, player2.y, player2.w, player2.h), itemColour;
+        
+        // Draw current scores
+        drawText(player1.score + '   ' + player2.score, (canvas.width / 2) - 75, 50, 50, itemColour);
+    }
+
+    // Helper function to draw any rectangle
+    function drawRect(x, y, w, h, c) {
+        canvasContext.fillStyle = c;
+        canvasContext.fillRect(x, y, w, h);
+    }
+
+    // Helper function to draw any text
+    function drawText(text, x, y, s, c) {
+        canvasContext.fillStyle = c;
+        canvasContext.font = s + 'px monospace';
+        canvasContext.fillText(text, x, y);
+    }
+
+    function drawBall() {
+        canvasContext.beginPath();
+        canvasContext.arc(ball.x, ball.y, ball.r, 0, 2 * Math.PI, false);
+        canvasContext.fillStyle = itemColour;
+        canvasContext.fill();
+    }
+
+    // Resets ball position to centre and reverses ball direction
+    function ballReset() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.dx = DEFAULT_BALL_SPEED.dx * (ball.dx > 0 ? -1 : 1 );
+        ball.dy = DEFAULT_BALL_SPEED.dy * (ball.dy > 0 ? 1 : -1 );
+    }
+
+    // Pauses the game if anyone has won
+    function checkScore() {
+        if (player1.score == WINNNG_SCORE || player2.score == WINNNG_SCORE) {
+            gamePaused = true;
+        }
+    }
+
+    function collisions() {
+
+        // Increase scores if ball goes off the edge to the left or right
+        if (ball.x <= (0 + ball.r) || (ball.x + ball.r) >= canvas.width) {
+            if (ball.dx >= 0) {
+                player1.score++;
+            } else {
+                player2.score++;
+            }
+            //Check if anyone has won
+            checkScore();
+            ballReset();
+        }
+
+        // Bounce ball if it hits the top or bottom of the court
+        if (ball.y <= (0 + ball.r) || (ball.y + ball.r) >= canvas.height) {
+            ball.dy = -ball.dy;
+        }
+
+        // Change ball angle depending on where it hits a paddle
+        let deltaY;
+        if (ball.dx < 0) {
+            deltaY = ((ball.y + ball.r) - (player1.y + (player1.h / 2))) * 0.3;
+        } else {
+            deltaY = ((ball.y + ball.r) - (player2.y + (player2.h / 2))) * 0.3;
+        }
+        if (Math.abs(deltaY) < DEFAULT_BALL_SPEED.dy) {
+            deltaY = Math.abs(deltaY);
+            if (ball.dy < 0) { deltaY *= -1; }
+        }
+        if (ball.y >= player1.y
+                && ball.y <= (player1.y + player1.h) 
+                && ball.x <= (player1.x + player1.w + ball.r)
+                && ball.dx < 0 ) {
+            ball.dx = -ball.dx ;
+            ball.dy = deltaY;
+        }
+        if ( ball.y >= player2.y
+                && ball.y <= (player2.y + player2.h) 
+                && ball.x >= (player2.x - ball.r) 
+                && ball.dx > 0 ){
+            ball.dx = -ball.dx;
+            ball.dy = deltaY;
+        }
+    }
+</script>
+</html>
